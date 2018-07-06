@@ -1,14 +1,8 @@
-# build:
-# 	protoc -I. --go_out=plugins=grpc:$(GOPATH)/src/github.com/testProject/user-service \
-# 		-I$(GOPATH)/src/github.com/grpc-ecosystem/grpc-gateway/third_party/googleapis \
-# 		proto/auth/auth.proto
-# GOOS=linux GOARCH=amd64 go build
-# docker build -t shippy-user-service .
-# docker build -t eu.gcr.io/shippy-freight/user:latest .
-# docker push eu.gcr.io/shippy-freight/user:latest
-#\#--net="host"
+VERSION?=$(shell git rev-parse HEAD)
+BRANCH?=$(shell git rev-parse --abbrev-ref HEAD)
+BUILD_TIME?=$(shell date -u '+%Y-%m-%d_%H:%M:%S')
 
-build: buildApi buildProxy buildSwagger
+build: buildApi buildProxy buildSwagger buildLocal
 
 buildApi:
 	protoc -I/usr/local/include -I. \
@@ -31,22 +25,15 @@ buildSwagger:
 		--swagger_out=logtostderr=true:. \
 		proto/auth/auth.proto
 
-buildDocker:
-	# GOOS=linux GOARCH=amd64 go build
-	docker build -t user-service .
-	# docker build -t eu.gcr.io/shippy-freight/user:latest .
-	# docker push eu.gcr.io/shippy-freight/user:latest
+buildLocal:
+	go build \
+		-ldflags="-X main.Version=${VERSION} \
+		-X main.Branch=${BRANCH} \
+		-X main.BuildTime=${BUILD_TIME}"
 
-run:
-	docker run --net="host" \
-		-p 50051 \
-		-e DB_HOST=localhost \
-		-e DB_PASS=password \
-		-e DB_USER=postgres \
-		-e MICRO_SERVER_ADDRESS=:50051 \
-		-e MICRO_REGISTRY=mdns \
-		shippy-user-service
+dockerPush:
+	docker build -t bege13mot/user-service:latest .
+	docker push bege13mot/user-service:latest
 
 deploy:
-	sed "s/{{ UPDATED_AT }}/$(shell date)/g" ./deployments/deployment.tmpl > ./deployments/deployment.yml
-	kubectl replace -f ./deployments/deployment.yml
+	helm upgrade --install user-service deployment-chart

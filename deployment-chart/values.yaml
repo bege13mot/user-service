@@ -1,0 +1,11 @@
+# Default values for chart.
+# This is a YAML-formatted file.
+# Declare variables to be passed into your templates.
+revision: latest
+
+config:
+  postgres: "postgres"
+  grpcPort: 50054
+  httpPort: 8080
+  dbPassword: "password"
+  dbPort: 5432

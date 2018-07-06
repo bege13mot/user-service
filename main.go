@@ -20,8 +20,8 @@ import (
 
 const (
 	defaultGrpcAddr     = "localhost:50054"
-	defaultGrpcHTTPAddr = "10.0.0.65:8081"
-	defaultConsulAddr   = "localhost:8500"
+	defaultGrpcHTTPAddr = "localhost:8080"
+	defaultConsulAddr   = "consul:8500"
 )
 
 var (
@@ -35,6 +35,13 @@ var (
 	grpcAddr     = os.Getenv("GRPC_ADDR")
 	grpcHTTPAddr = os.Getenv("GRPC_HTTP_ADDR")
 	consulAddr   = os.Getenv("CONSUL_ADDR")
+
+	// BuildTime is a time label of the moment when the binary was built
+	BuildTime = "unset"
+	// Version is a last commit hash at the moment when the binary was built
+	Version = "unset"
+	// Branch name
+	Branch = "unset"
 )
 
 func initVar() {
@@ -59,6 +66,12 @@ func initVar() {
 		log.Println("Use default Consul connection settings")
 		consulAddr = defaultConsulAddr
 	}
+
+	log.Printf(
+		"Starting the service...\ncommit: %s, build time: %s, release: %s",
+		Version, BuildTime, Branch,
+	)
+
 }
 
 // allowCORS allows Cross Origin Resoruce Sharing from any origin.
@@ -133,22 +146,9 @@ func main() {
 		},
 	})
 	if err != nil {
-		log.Println("Couldn't register service in Consul, ", err)
+		log.Println("Couldn't remove service from Consul, ", err)
 	}
-	log.Println("Registered in Consul", serviceID)
-
-	//Test section
-	health, _, err := consul.Health().Service("user-service", "", false, nil)
-	if err != nil {
-		log.Println("Cant get alive services")
-	}
-
-	fmt.Println("HEALTH: ", len(health))
-	for _, item := range health {
-		fmt.Println("Checks: ", item.Checks, item.Checks.AggregatedStatus())
-		fmt.Println("Service: ", item.Service.ID, item.Service.Address, item.Service.Port)
-		fmt.Println("--- ")
-	}
+	log.Println("Remove from Consul", serviceID)
 
 	//Get IP
 	ip, err := net.InterfaceAddrs()

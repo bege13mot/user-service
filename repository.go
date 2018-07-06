@@ -6,15 +6,6 @@ import (
 	uuid "github.com/satori/go.uuid"
 )
 
-type myUser struct {
-	*pb.User
-}
-
-func (model *myUser) BeforeCreate(scope *gorm.Scope) error {
-	uuid, _ := uuid.NewV4()
-	return scope.SetColumn("Id", uuid.String())
-}
-
 type repository interface {
 	getAll() ([]*pb.User, error)
 	get(id string) (*pb.User, error)
@@ -54,7 +45,7 @@ func (repo *userRepository) getByEmail(email string) (*pb.User, error) {
 }
 
 func (repo *userRepository) create(user *pb.User) error {
-	uuid, _ := uuid.NewV4()
+	uuid := uuid.NewV4()
 	user.Id = uuid.String()
 
 	if err := repo.db.Create(user).Error; err != nil {

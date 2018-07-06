@@ -1,0 +1,59 @@
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: user
+  labels:
+    app: user
+spec:
+  ports:
+  - name: grpc
+    port: {{ .Values.config.grpcPort }}
+  - name: http
+    port: 80
+    targetPort: {{ .Values.config.httpPort }}
+  selector:
+    app: user
+---
+apiVersion: apps/v1beta1
+kind: Deployment
+metadata:
+  name: user
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: user
+  template:
+    metadata:
+      labels:
+        app: user
+    spec:
+        containers:
+        - name: user-service
+          image: bege13mot/user-service:latest
+          imagePullPolicy: Always
+          env:
+          - name: DB_HOST
+            value: {{ .Values.config.postgres }}
+          - name: DB_USER
+            value: {{ .Values.config.postgres }}
+          - name: DB_NAME
+            value: {{ .Values.config.postgres }}
+          - name: DB_PASSWORD
+            value: {{ .Values.config.dbPassword }}
+          - name: DB_PORT
+            value: "{{ .Values.config.dbPort }}"
+          - name: GRPC_ADDR
+            value: ":{{ .Values.config.grpcPort }}"
+          - name: GRPC_HTTP_ADDR
+            value: ":{{ .Values.config.httpPort }}"
+          ports:
+          - containerPort: {{ .Values.config.grpcPort }}
+            name: grpc-port
+          - containerPort: {{ .Values.config.httpPort }}
+            name: http-port
+          livenessProbe:
+            httpGet:
+              path: /healthz
+              port: {{ .Values.config.httpPort }}

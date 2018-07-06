@@ -3,7 +3,7 @@ package main
 import (
 	"testing"
 
-	pb "github.com/testProject/user-service/proto/auth"
+	pb "github.com/bege13mot/user-service/proto/auth"
 )
 
 func TestCases(t *testing.T) {
